@@ -1,27 +1,27 @@
 import os
 import opciones_menu
-from decoracionMenu import superior_menu
+import decoracionMenu
 
 def menu_principal(uri,db):
     while True:
         os.system("cls")
-        print(superior_menu(22,1) + " MENÚ " + superior_menu(22,2))
+        decoracionMenu.texto("="*47 + " MENÚ " + "="*47, 100 , "cen")
+        decoracionMenu.texto(" - [1] Listado de todos los eventos", 100 , "izq")
+        decoracionMenu.texto(" - [2] Listado de eventos por categoría", 100 , "izq")
+        decoracionMenu.texto(" - [3] Lista de invitados", 100 , "izq")
+        decoracionMenu.texto(" - [4] Buscar invitados por correo", 100 , "izq")
+        decoracionMenu.texto(" - [5] Top 3 eventos por números de invitados confirmados", 100 , "izq")
+        decoracionMenu.texto(" - [X] Volver", 100 , "izq")
 
-        print("|| - [1] Listado de eventos" + "\t" * 5 +"||")
-        print("|| - [2] Listado de por categoría" + "\t" * 4 +"||")
-        print("|| - [3] Listado de invitados" + "\t" * 5 +"||")
-        print("|| - [4] Buscar invitados por correo" + "\t" * 4 +"||")
-        print("|| - [5] Top 3 eventos por números de invitados confirmados" + "\t" * 1 +"||")
-        print("|| - [x] Volver" + "\t" * 7 +"||")
-
-        opcion = input(superior_menu(50) + "\n\n Opción: ")
+        opcion = input(decoracionMenu.superior_menu(100) + "\n\n Opción: ")
+        
+        col = db["eventos"]
 
         if opcion.isalpha():
             opcion.lower()
 
         match opcion:
             case "1":
-                col = db["eventos"]
                 opciones_menu.listadoEventos(uri,db,col)
             case "2":
                 opciones_menu.listadoEventosCategoria(uri,db,col)
