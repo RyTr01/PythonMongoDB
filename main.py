@@ -24,13 +24,13 @@ if __name__ == "__main__":
         print(decoracionMenu.superior_menu(100,4))
         decoracionMenu.texto("Ingrese el Nombre de la base de datos (DB)",100)
         decoracionMenu.texto("RECORDATORIO: Ingresar como Nombre el Nombre de una DB que no existe, creará una DB con ese nombre.",100)
-        decoracionMenu.texto("Por defecto: test",100)
+        decoracionMenu.texto("Por defecto: Prueba3",100)
         print(decoracionMenu.superior_menu(100,4))
         print(decoracionMenu.superior_menu(100))
         nombre_db = input("\nDB: ")
 
         if nombre_db == "":
-            nombre_db = "test"
+            nombre_db = "Prueba3"
     
         try:
             cliente = MongoClient(uri, serverSelectionTimeoutMS=2500)
