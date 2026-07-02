@@ -85,6 +85,56 @@ def listadoInvitados(uri,db,col):
     input("\nPresione Enter para volver...")
     return
 
+def verificarConfirmacion(uri,db,col):
+    os.system("cls")
+    decoracionMenu.texto("="*100)
+    decoracionMenu.texto("Ingrese el correo del invitado: ")
+    decoracionMenu.texto("="*100)
+    correo = input("Correo: ")
+
+
+    os.system("cls")
+    decoracionMenu.texto("="*100)
+    decoracionMenu.texto("Ingrese el código del evento a revisar: ")
+    decoracionMenu.texto("="*100)
+    evento = input("Código: ")
+
+    pipeline = [
+        {"$match": {"codigo": evento}},
+        {"$unwind": "$invitados"},
+        {"$lookup": {
+            "from": "invitados",
+            "localField": "invitados.rut",
+            "foreignField": "rut",
+            "as": "infoInvitado"
+        }},
+        {"$unwind": "$infoInvitado"},
+        {"$match": {"infoInvitado.correo": correo}},
+        {"$project": {"_id": 0, "estadoInvitado": "$infoInvitado.estado", "estadoEvento": "$invitados.estado"}}
+        ]
+    
+    resultado = list(col.aggregate(pipeline))
+
+    if not resultado:
+        os.system("cls")
+        decoracionMenu.texto("="*100)
+        decoracionMenu.texto("Error: El correo no está registrado en este evento, o el evento no existe")
+        decoracionMenu.texto("="*100)
+        input("Presione Enter para continuar...")
+        return
+    
+    estadoInvitado = resultado[0]["estadoInvitado"]
+    estadoEvento = resultado[0]["estadoEvento"]
+    os.system("cls")
+    
+    decoracionMenu.texto("="*100)
+    decoracionMenu.texto(f"Estado invitado (global): {estadoInvitado}")
+    decoracionMenu.texto(f"Estado invitado en evento {evento}: {estadoEvento}")
+    decoracionMenu.texto("="*100)
+    input("Presione Enter para continuar...")
+    return
+
+
 def invitadosCorreo(uri,db,col):
     os.system("cls")
 
