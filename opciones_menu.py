@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import os
+import sys
 from decoracionMenu import superior_menu
 import decoracionMenu
 
@@ -9,7 +10,7 @@ def listadoEventos(uri,db,col):
     documentos = col.find({},{'codigo':1,'nombre':1,'fecha':1,'lugar':1,'categoria':1})
 
     if col.count_documents({})==0:
-        decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'")
+        decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'.")
         decoracionMenu.texto("="*100)
     else:
         for doc in documentos:
@@ -28,7 +29,7 @@ def listadoEventosCategoria(uri,db,col):
     
     decoracionMenu.texto("="*100)
     decoracionMenu.texto("Ingrese la categoría del evento que busca")
-    decoracionMenu.texto("En caso de no tener la categoría, dejarlo en blanco")
+    decoracionMenu.texto("En caso de no tener la categoría, dejarlo en blanco y mostrará todos los eventos")
     decoracionMenu.texto("="*100)
 
     categoria = input("\nCategoría: ")
@@ -43,7 +44,7 @@ def listadoEventosCategoria(uri,db,col):
         documentos = col.find({},{'codigo':1,'nombre':1,'fecha':1,'lugar':1,'categoria':1})
         
     if col.count_documents({})==0:
-        decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'")
+        decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'.")
         decoracionMenu.texto("="*100)
     else:
         for doc in documentos:
@@ -71,7 +72,7 @@ def listadoInvitados(uri,db,col):
     os.system("cls")
     decoracionMenu.texto("=" * 39+ " Listado de Invitados " + "=" * 39,100)
     if col.count_documents({})==0:
-        decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'")
+        decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'.")
         decoracionMenu.texto("="*100)
     else:
         for doc in documentos:
@@ -85,7 +86,7 @@ def listadoInvitados(uri,db,col):
     input("\nPresione Enter para volver...")
     return
 
-def verificarConfirmacion(uri,db,col):
+def validarAcceso(uri,db,col):
     os.system("cls")
     decoracionMenu.texto("="*100)
     decoracionMenu.texto("Ingrese el correo del invitado: ")
@@ -118,7 +119,7 @@ def verificarConfirmacion(uri,db,col):
     if not resultado:
         os.system("cls")
         decoracionMenu.texto("="*100)
-        decoracionMenu.texto("Error: El correo no está registrado en este evento, o el evento no existe")
+        decoracionMenu.texto("Error: El correo no está registrado en este evento, o el evento no existe.")
         decoracionMenu.texto("="*100)
         input("Presione Enter para continuar...")
         return
@@ -151,23 +152,52 @@ def invitadosCorreo(uri,db,col):
     if correo == "":
         decoracionMenu.texto("Error: Correo no válido")
         decoracionMenu.texto("="*100)
+        input("Presione Enter para continuar...")
+        return
 
-    else:
-        documentos = col.find({'$or':[{'nombre':{'$regex': correo, '$options': 'i'}},
-                                      {'correo': {'$regex': correo, '$options': 'i'}}]})
-        
-        if col.count_documents({})==0:
-            decoracionMenu.texto(f"No se encontraron registros en la colección '{col.name}'")
-            decoracionMenu.texto("="*100)
+    filtro = {"correo": {"$regex": correo, "$options": "i"}}
 
-        else:
-            for doc in documentos:
-                decoracionMenu.texto("Rut: " + f"       {doc.get('rut')}", 100, "izq")
-                decoracionMenu.texto("Correo: " + f"    {doc.get('correo')}", 100, "izq")
-                decoracionMenu.texto("Estado: " + f"    {doc.get('estado')}", 100, "izq")
-                decoracionMenu.texto("="*100)
-            
+    if col.count_documents(filtro) == 0:
+        decoracionMenu.texto(f"No se encontró registros que coincidan con '{correo}'.")
+        decoracionMenu.texto("="*100)
+        input("Presione Enter para continuar...")
+        return
+    
+    documentos = col.find(filtro)
+    
+    for doc in documentos:
+        decoracionMenu.texto("Rut: " + f"       {doc.get('rut')}", 100, "izq")
+        decoracionMenu.texto("Correo: " + f"    {doc.get('correo')}", 100, "izq")
+        decoracionMenu.texto("Estado: " + f"    {doc.get('estado')}", 100, "izq")
+        decoracionMenu.texto("="*100)
+    sys.stdin.flush()
     input("\nPresione Enter para volver...")
 
 def topEventos(uri,db,col):
-    docs = col.find({})
+    os.system("cls")
+    decoracionMenu.texto("="*28 + " Top 3 eventos con más personas confirmadas " + "="*28)
+
+    pipeline = [
+        {"$unwind": "$invitados"},
+        {"$match": {"invitados.estado": "confirmado"}},
+        {"$group": {
+            "_id": {"codigo": "$codigo", "nombre": "$nombre"},
+            "totalConfirmados": {"$sum": 1}
+        }},
+        {"$sort": {"totalConfirmados": -1}},
+        {"$limit": 3}
+    ]
+
+    resultado = list(col.aggregate(pipeline))
+
+    if not resultado:
+        decoracionMenu.texto("No se encontraron eventos con invitados confirmados.")
+        decoracionMenu.texto("="*100)
+        input("Presione Enter para continuar...")
+        return
+    
+    for i, doc in enumerate(resultado, start=1):
+        decoracionMenu.texto(f"   {i}: {doc['_id']['nombre']} ({doc['_id']['codigo']})",100,"izq")
+        decoracionMenu.texto(f"   Confirmados: {doc['totalConfirmados']}",100,"izq")
+        decoracionMenu.texto("="*100)
+    input("Presione Enter para continuar...")
